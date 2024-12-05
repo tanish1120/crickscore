@@ -4,7 +4,6 @@ const ScoreCard = () => {
   const teamA = { name: "IND", score: 297, wickets: 6, overs: 20 };
   const teamB = { name: "BAN", score: 164, wickets: 7, overs: 20 };
 
-  // 11 players in the batting team with initial 0 runs, balls, and fours
   const allBatsmen = [
     { name: "Sachin Tendulkar", runs: 0, balls: 0, fours: 0 },
     { name: "Virat Kohli", runs: 0, balls: 0, fours: 0 },
@@ -19,27 +18,25 @@ const ScoreCard = () => {
     { name: "Mohammad Shami", runs: 0, balls: 0, fours: 0 },
   ];
 
-  // Initialize activeBatsmen with the first two batsmen
   const [activeBatsmen, setActiveBatsmen] = useState([allBatsmen[0], allBatsmen[1]]);
-  const [strikerIndex, setStrikerIndex] = useState(0); // Index of the current striker
-  const [latestMessage, setLatestMessage] = useState(""); // Empty message initially
-  const [totalWickets, setTotalWickets] = useState(0); // Track total wickets
-  const [commentary, setCommentary] = useState([]); // Track commentary messages
-  const [balls, setBalls] = useState(0); //
+  const [strikerIndex, setStrikerIndex] = useState(0);
+  const [latestMessage, setLatestMessage] = useState("");
+  const [totalWickets, setTotalWickets] = useState(0);
+  const [commentary, setCommentary] = useState([]);
+  const [balls, setBalls] = useState(0);
 
   const commentaryRef = useRef(null);
 
-  // Revert to previous bowler's stats state
   const [bowlers, setBowlers] = useState([
     { name: "Nitish Kumar Reddy", overs: 0.0, runs: 0, wickets: 0 },
   ]);
 
   useEffect(() => {
-    // Randomly select a striker at the beginning
-    const randomStriker = Math.floor(Math.random() * 2); // Select either 0 or 1 randomly
+    // Randomly striker at the beginning
+    const randomStriker = Math.floor(Math.random() * 2);
     setStrikerIndex(randomStriker);
 
-    // Connect to WebSocket server (replace 'ws://localhost:3000' with your WebSocket server URL)
+    // Connect to WebSocket server
     const socket = new WebSocket("ws://localhost:3000");
 
     socket.onopen = () => {
@@ -47,24 +44,22 @@ const ScoreCard = () => {
     };
 
     socket.onmessage = (event) => {
-      const data = JSON.parse(event.data); // Assuming the server sends a JSON message
+      const data = JSON.parse(event.data);
       console.log("Received WebSocket message:", data);
 
       
 
-      // Handle runs, balls, and fours for striker
       if (["1", "2", "3", "4", "5", "6"].includes(data.option.toString())) {
         setActiveBatsmen((prevBatsmen) => {
 
             setBowlers((prevBowlers) => {
                 const newBowlers = [...prevBowlers];
-                const currentBowler = newBowlers[0]; // Assuming one bowler
+                const currentBowler = newBowlers[0];
               
-                // Increment the number of balls bowled
                 if (currentBowler.overs % 1 === 0.5) {
-                  currentBowler.overs = Math.floor(currentBowler.overs) + 1; // Move to the next over
+                  currentBowler.overs = Math.floor(currentBowler.overs) + 1;
                 } else {
-                  currentBowler.overs += 0.1; // Increment by 0.1 for each ball
+                  currentBowler.overs += 0.1;
                 }
               
                 return newBowlers;
@@ -72,90 +67,75 @@ const ScoreCard = () => {
           const newBatsmen = [...prevBatsmen];
           const currentStriker = newBatsmen[strikerIndex];
 
-          // Increment balls for every event (only once)
           currentStriker.balls += 1;
 
-          // Update runs based on the option (parse it to number)
-          const runsScored = parseInt(data.option, 10); // Ensure it’s a number
-          currentStriker.runs += runsScored; // Add the runs based on the option
+          const runsScored = parseInt(data.option, 10);
+          currentStriker.runs += runsScored;
 
-          // If the option is 4, increment the fours count
           if (runsScored === 4) {
             currentStriker.fours += 1;
           }
 
-          // Update the batsmen array
           newBatsmen[strikerIndex] = currentStriker;
           return newBatsmen;
         });
 
-        // Add normal commentary message
         setCommentary((prevCommentary) => [
           ...prevCommentary,
           `${data.option} run to striker`,
         ]);
       }
 
-      // Handle special cases like "No Ball", "Wide", "Catch Out", "Wicket", "Run Out"
       if (["No Ball", "Wide"].includes(data.option)) {
         setCommentary((prevCommentary) => [
           ...prevCommentary,
-          `${data.option}`, // Directly add the special message
+          `${data.option}`,
         ]);
       }
 
-      // Handle player out event: catch out, wicket, or runout
       if (["Catch Out", "Wicket", "Run Out"].includes(data.option.toString())) {
         const currentStriker = activeBatsmen[strikerIndex];
 
-        // Make a copy of activeBatsmen before modifying it
         const newBatsmenArray = [...activeBatsmen];
 
-        // Remove the striker (out player)
         const updatedBatsmen = newBatsmenArray.filter((batsman, index) => index !== strikerIndex);
 
-        // Find the next available batsman who is not already in activeBatsmen
         const nextAvailableBatsman = allBatsmen.find(
           (batsman) => !updatedBatsmen.includes(batsman)
         );
 
-        // Add the next batsman to the end of the array
         updatedBatsmen.push(nextAvailableBatsman);
 
-        // Update the activeBatsmen array
         setActiveBatsmen(updatedBatsmen);
 
-        // If the striker was out, we make the non-striker the new striker
         if (strikerIndex === 0) {
-          setStrikerIndex(1); // Non-striker becomes the new striker
+          setStrikerIndex(1);
         } else {
-          setStrikerIndex(0); // Non-striker becomes the new striker
+          setStrikerIndex(0);
         }
 
-        // Increment total wickets
+       
         setTotalWickets((prevWickets) => prevWickets + 1);
 
-        // Increment bowler's wickets
+       
         setBowlers((prevBowlers) => {
           const newBowlers = [...prevBowlers];
-           const currentBowler = newBowlers[0]; // Assuming one bowler
+           const currentBowler = newBowlers[0];
 
           
 
-          // Increment the number of balls bowled
+         
           newBowlers[0].wickets += 1;
-          newBowlers[0].wickets += 1; // Assuming there's only one bowler
+          newBowlers[0].wickets += 1;
           return newBowlers;
         });
 
-        // Add the wicket-related commentary
         setCommentary((prevCommentary) => [
           ...prevCommentary,
           `${data.option} - Batsman is out!`,
         ]);
       }
 
-      // Set the latest message to show
       setLatestMessage(`This ball is: ${data.option}`);
     };
 
@@ -172,20 +152,17 @@ const ScoreCard = () => {
   useEffect(() => {
     const scrollContainer = commentaryRef.current;
     if (scrollContainer) {
-      scrollContainer.scrollTop = scrollContainer.scrollHeight; // Scroll to bottom
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
     }
-  }, [commentary]); // Re-run this effect when the commentary array changes
+  }, [commentary]);
 
-  // Get striker with "*" mark
   const getStrikerName = (batsman, isStriker) => {
     return isStriker ? `${batsman.name} *` : batsman.name;
   };
 
-  // Calculate total runs (sum of all runs from 1-6 events)
   const calculateTotalRuns = () => {
     let totalRuns = 0;
     commentary.forEach((msg) => {
-      // Check for runs (1-6)
       if (["1", "2", "3", "4", "5", "6"].includes(msg.split(" ")[0])) {
         totalRuns += parseInt(msg.split(" ")[0]);
       }
@@ -193,7 +170,6 @@ const ScoreCard = () => {
     return totalRuns;
   };
 
-  // Calculate total wickets (sum of "Catch Out", "Wicket", "Run Out" events)
   const calculateTotalWickets = () => {
     let totalWickets = 0;
     commentary.forEach((msg) => {

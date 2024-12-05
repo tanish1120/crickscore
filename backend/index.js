@@ -47,10 +47,8 @@ app.use(
   })
 );
 
-// Socket communication for sending updates to all connected clients
 const broadcastMessage = (message) => {
-    // Log the message before broadcasting
-    console.log("Broadcasting message: ", JSON.stringify(message));
+    console.log("Broadcasting message----> ", JSON.stringify(message));
   
     // Send the message to all connected clients
     wss.clients.forEach(client => {
@@ -153,7 +151,6 @@ app.server.on('upgrade', (request, socket, head) => {
   });
 });
 
-// New endpoint to handle the 'done' button press
 app.post("/done", (req, res) => {
   const { option } = req.body;
 
@@ -161,7 +158,6 @@ app.post("/done", (req, res) => {
     return res.status(400).send("Please provide an option.");
   }
 
-  // Broadcast the selected option to all WebSocket clients
   broadcastMessage({
     type: "selected_option",
     option,
