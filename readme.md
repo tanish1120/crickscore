@@ -36,6 +36,15 @@ This project consists of three main folders:
     npm install
     ```
 
+    Configure your MongoDB connection string. If using a local MongoDB setup, the default connection string might look like:
+
+    ```bash
+    mongodb://localhost:27017/cricket
+    ```
+
+    If using MongoDB Atlas or a different remote setup, replace the connection string accordingly.
+
+
     Start the backend server:
 
     ```bash
