@@ -19,7 +19,7 @@ This project consists of three main folders:
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/tanish1120/crickscore
+    git clone https://github.com/tanish1120/crickscore.git
     ```
 
 2. **Backend Setup**
