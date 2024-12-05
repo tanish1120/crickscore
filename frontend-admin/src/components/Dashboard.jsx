@@ -3,8 +3,8 @@ import React, { useState, useEffect } from "react";
 const Dashboard = () => {
   const [selectedOption, setSelectedOption] = useState("");
   const [message, setMessage] = useState("");
-  const [overBall, setOverBall] = useState("0.0"); // Initialize with 0.0 for first over
-  const [currentRuns, setCurrentRuns] = useState(0); // Start with some runs
+  const [overBall, setOverBall] = useState("0.0");
+  const [currentRuns, setCurrentRuns] = useState(0);
   const [ws, setWs] = useState(null);
   const [broadcastMessage, setBroadcastMessage] = useState("");
 
@@ -14,7 +14,7 @@ const Dashboard = () => {
   ];
 
   useEffect(() => {
-    // Connect to WebSocket server
+    // Connect to Web Socket server
     const socket = new WebSocket("ws://localhost:3000");
     socket.onopen = () => console.log("Connected to WebSocket server");
     socket.onmessage = (event) => {
@@ -44,38 +44,31 @@ const Dashboard = () => {
       setMessage(`You selected "${selectedOption}".`);
       setSelectedOption("");
 
-      // Update current runs and over/ball based on selected option
       let runsScored = 0;
-      let newOverBall = overBall.split('.'); // Split over/ball (eg. "1.4" -> [1, 4])
+      let newOverBall = overBall.split('.');
       let newRuns = currentRuns;
 
-      // Handle the selected option
       if (["No Ball", "Wide"].includes(selectedOption)) {
-        // No Ball and Wide don't count towards ball count but they do add runs
         if (selectedOption === "No Ball" || selectedOption === "Wide") {
-          runsScored = 1; // No ball and wide add 1 run by default
-          newOverBall[1] = (parseInt(newOverBall[1]) + 1) % 6; // Increment ball
+          runsScored = 1;
+          newOverBall[1] = (parseInt(newOverBall[1]) + 1) % 6;
           if (newOverBall[1] === 0) {
-            newOverBall[0] = parseInt(newOverBall[0]) + 1; // Increment over when ball hits 6
+            newOverBall[0] = parseInt(newOverBall[0]) + 1;
           }
         }
       } else if (["Catch Out", "Wicket", "Run Out"].includes(selectedOption)) {
-        // Wicket events don't add runs, but they do affect the game
         runsScored = 0;
       } else {
-        // Normal runs between 0-6
         runsScored = parseInt(selectedOption);
-        newOverBall[1] = (parseInt(newOverBall[1]) + 1) % 6; // Increment ball
+        newOverBall[1] = (parseInt(newOverBall[1]) + 1) % 6;
         if (newOverBall[1] === 0) {
-          newOverBall[0] = parseInt(newOverBall[0]) + 1; // Increment over when ball hits 6
+          newOverBall[0] = parseInt(newOverBall[0]) + 1;
         }
       }
 
-      // Update the state with the new runs and over/ball
       setCurrentRuns(newRuns + runsScored);
       setOverBall(newOverBall.join('.'));
 
-      // Send selected option to backend via POST request
       try {
         const response = await fetch("http://localhost:3000/done", {
           method: "POST",
@@ -85,12 +78,12 @@ const Dashboard = () => {
           body: JSON.stringify({ option: selectedOption }),
         });
         if (response.ok) {
-          console.log("Option broadcasted to all clients.");
+          console.log("Done Button Success");
         } else {
-          console.log("Error broadcasting option.");
+          console.log("Error In Done Button");
         }
       } catch (error) {
-        console.error("Error sending option:", error);
+        console.error("Error in Done with eroor: ", error);
       }
     }
   };
@@ -99,10 +92,9 @@ const Dashboard = () => {
     <div className="flex flex-col-reverse md:flex-row-reverse justify-between items-center h-screen bg-gradient-to-br from-gray-100 to-blue-100 p-4">
     <button
       onClick={() => {
-        // Perform logout logic here
         console.log("User logged out");
-        localStorage.removeItem("token"); // Remove token from local storage
-        window.location.href = "/login"; // Redirect to login page
+        localStorage.removeItem("token");
+        window.location.href = "/login";
       }}
       className="px-4 py-2 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 shadow-md transition-all duration-200 mt-4"
     >
